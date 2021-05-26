@@ -1,5 +1,5 @@
 
-# mdparser-js
+# skalver-mdparser
 This is a simple markdown to HTML converter that reads markdown data and returns
 an HTML representation, with support for headers, text emphasis, block quotes,
 unordered lists, hr tags and spans, along with normal text as paragraphs. 
