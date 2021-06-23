@@ -1,5 +1,8 @@
 use wasm_bindgen::prelude::*;
 
+pub mod meta;
+pub mod formatting;
+
 #[wasm_bindgen]
 pub fn parse_markdown(data: String) -> String {
     let mut tokens: Vec<String> = Vec::new();
@@ -11,7 +14,7 @@ pub fn parse_markdown(data: String) -> String {
     let mut cb = false;
     for buf_line in data.lines() {
         let line = buf_line;
-        let line = line.trim();
+        let line = line.trim_start();
         let compiled_line: String;
 
         // Check the first non-whitespace word to determine what type of line this is.
@@ -220,10 +223,11 @@ pub fn parse_markdown(data: String) -> String {
     if ol {
         tokens.push(String::from("</ol>"));
     }
-    // Final cleanup by removing empty tags and adding text emphasis
+    // Final cleanup by removing empty tags and adding text emphasis, line breaks
     for line in &mut tokens {
-        *line = remove_empty_tags(&line);
-        *line = emphasize_text(&line);
+        *line = formatting::remove_empty_tags(&line);
+        *line = formatting::emphasize_text(&line);
+        *line = formatting::add_line_breaks(&line);
     }
 
     let mut html_string = String::new();
@@ -233,79 +237,3 @@ pub fn parse_markdown(data: String) -> String {
     html_string
 }
 
-fn remove_empty_tags(line: &str) -> String {
-    let mut line = String::from(line);
-
-    line = line
-        .replace("<p></p>", "")
-        .replace("<ul></ul>", "")
-        .replace("<ol></ol>", "")
-        .replace("<blockquote></blockquote>", "")
-        .replace("<div></div>", "")
-        .replace("<em><strong></strong><em>", "")
-        .replace("<em></em>", "")
-        .replace("<strong></strong>", "")
-        .replace("<span></span>", "");
-    line
-}
-
-fn emphasize_text(line: &str) -> String {
-    let mut line = String::from(line);
-
-    // Replace backticks with span 
-    loop {
-        match line.find("`") {
-            Some(_) => {
-                line = line
-                    .replacen("`", "<span>", 1)
-                    .replacen("`", "</span>", 1);
-            },
-            None => {
-                break;
-            }
-        }
-    }
-
-    // First loop replaces triple-asterisks (bold italic)
-    loop {
-        match line.find("***") {
-            Some(_) => {
-                line = line
-                    .replacen("***", "<strong><em>", 1)
-                    .replacen("***", "</em></strong>", 1);
-            },
-            None => {
-                break;
-            }
-        }
-    }
-
-    // Second loop replaces double-asterisks (bold)
-    loop {
-        match line.find("**") {
-            Some(_) => {
-                line = line
-                    .replacen("**", "<strong>", 1)
-                    .replacen("**", "</strong>", 1);
-            },
-            None => {
-                break;
-            }
-        }
-    }
-
-    // Lastly, the third loop replaces single-asterisks (italic)
-    loop {
-        match line.find("*") {
-            Some(_) => {
-                line = line
-                    .replacen("*", "<em>", 1)
-                    .replacen("*", "</em>", 1);
-            },
-            None => {
-                break;
-            }
-        }
-    }
-    line
-}
