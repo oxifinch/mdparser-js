@@ -2,6 +2,8 @@ use wasm_bindgen::prelude::*;
 
 pub mod meta;
 pub mod formatting;
+use formatting::MarkdownFormat;
+pub mod tests;
 
 #[wasm_bindgen]
 pub fn parse_markdown(data: String) -> String {
@@ -13,8 +15,8 @@ pub fn parse_markdown(data: String) -> String {
     let mut bq = false;
     let mut cb = false;
     for buf_line in data.lines() {
-        let line = buf_line;
-        let line = line.trim_start();
+        let mut line = String::from(buf_line.trim_start());
+        line = line.add_line_breaks();
         let compiled_line: String;
 
         // Check the first non-whitespace word to determine what type of line this is.
@@ -80,44 +82,44 @@ pub fn parse_markdown(data: String) -> String {
             // TODO: Headers get included in bq if there is no blank line between them. That
             // probably should't happen.
             "#" => {
-                let line = line.replace("#", "");
+                let line = line.replacen("#", "", 1);
                 compiled_line = format!("<h1>{}</h1>\n", line.trim());
-                tokens.push(compiled_line);
+                tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                 continue;
             },
             "##" => {
-                let line = line.replace("##", "");
+                let line = line.replacen("##", "", 1);
                 compiled_line = format!("<h2>{}</h2>\n", line.trim());
-                tokens.push(compiled_line);
+                tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                 continue;
             },
             "###" => {
-                let line = line.replace("###", "");
+                let line = line.replacen("###", "", 1);
                 compiled_line = format!("<h3>{}</h3>\n", line.trim());
-                tokens.push(compiled_line);
+                tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                 continue;
             },
             "####" => {
-                let line = line.replace("####", "");
+                let line = line.replacen("####", "", 1);
                 compiled_line = format!("<h4>{}</h4>\n", line.trim());
-                tokens.push(compiled_line);
+                tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                 continue;
             },
             "#####" => {
-                let line = line.replace("#####", "");
+                let line = line.replacen("#####", "", 1);
                 compiled_line = format!("<h5>{}</h5>\n", line.trim());
-                tokens.push(compiled_line);
+                tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                 continue;
             },
             "######" => {
-                let line = line.replace("######", "");
+                let line = line.replacen("######", "", 1);
                 compiled_line = format!("<h6>{}</h6>\n", line.trim());
-                tokens.push(compiled_line);
+                tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                 continue;
             },
             "---" => {
                 compiled_line = String::from("<hr>\n");
-                tokens.push(compiled_line);
+                tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                 continue;
             },
             "-" | "*" => {
@@ -132,12 +134,12 @@ pub fn parse_markdown(data: String) -> String {
                     } else {
                         compiled_line = format!("<ul>\n<li>{}</li>\n", line.trim());
                     }
-                    tokens.push(compiled_line);
+                    tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                     continue;
                 } else if ul {
                     let line = line.replace("-", "").replace("*", "");
                     compiled_line = format!("<li>{}</li>\n", line.trim());
-                    tokens.push(compiled_line);
+                    tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                     continue;
                 }
             },
@@ -148,11 +150,11 @@ pub fn parse_markdown(data: String) -> String {
                     if ul {
                         ul = false;
                         compiled_line = format!("</ul><div>{} \n", line.trim());
-                        tokens.push(compiled_line);
+                        tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                         continue;
                     } else {
                         compiled_line = format!("<div>{} \n", line.trim());
-                        tokens.push(compiled_line);
+                        tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                         continue;
                     }
                 } else if cb {
@@ -161,12 +163,12 @@ pub fn parse_markdown(data: String) -> String {
                     if p {
                         p = false;
                         compiled_line = format!("{} </p></div>\n", line.trim());
-                        tokens.push(compiled_line);
+                        tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                         continue;
                     } else {
                         let line = line.replace("```", "");
                         compiled_line = format!("{} </div>\n", line.trim());
-                        tokens.push(compiled_line);
+                        tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                         continue;
                     }
                 }
@@ -182,7 +184,7 @@ pub fn parse_markdown(data: String) -> String {
                         compiled_line = format!("</p>\n<blockquote>{} ", line.trim());
                         p = false;
                     }
-                    tokens.push(compiled_line);
+                    tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                     continue;
                 }
             },
@@ -192,16 +194,18 @@ pub fn parse_markdown(data: String) -> String {
             _ => {
                 if bq {
                     compiled_line = format!("{} ", line.trim());
-                    tokens.push(compiled_line);
+                    tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                     continue;
                 } else if !p {
                     p = true;
+                    line = line.add_line_breaks();
                     compiled_line = format!("<p>{} ", line.trim());
-                    tokens.push(compiled_line);
+                    println!("[ DEBUG ] Found a paragraph.");
+                    tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                     continue;
                 } else {
                     compiled_line = format!("{} ", line.trim());
-                    tokens.push(compiled_line);
+                    tokens.push(compiled_line.emphasize_text().remove_empty_elements());
                     continue;
                 }
             }
@@ -223,12 +227,6 @@ pub fn parse_markdown(data: String) -> String {
     if ol {
         tokens.push(String::from("</ol>"));
     }
-    // Final cleanup by removing empty tags and adding text emphasis, line breaks
-    for line in &mut tokens {
-        *line = formatting::remove_empty_tags(&line);
-        *line = formatting::emphasize_text(&line);
-        *line = formatting::add_line_breaks(&line);
-    }
 
     let mut html_string = String::new();
     for line in tokens {
@@ -237,3 +235,9 @@ pub fn parse_markdown(data: String) -> String {
     html_string
 }
 
+#[test]
+fn test_markdown() {
+    let content = tests::read_markdown_file("./testfiles/markdown_01.md");
+    let parsed_html = parse_markdown(content);
+    println!("{}", parsed_html);
+}

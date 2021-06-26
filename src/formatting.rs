@@ -1,73 +1,81 @@
-pub fn add_line_breaks(line: &str) -> String {
-    let line = line.trim_start().replace("  ", "<br>");
-    String::from(line)
+pub trait MarkdownFormat {
+    fn add_line_breaks(self) -> String;
+    fn emphasize_text(self) -> String;
+    fn remove_empty_elements(self) -> String;
 }
 
-pub fn emphasize_text(line: &str) -> String {
-    let mut line = String::from(line);
-
-    // Replace backticks with span 
-    loop {
-        match line.find("`") {
+impl MarkdownFormat for String {
+    fn add_line_breaks(self) -> String {
+        match &self.find("  ") {
             Some(_) => {
-                line = line
-                    .replacen("`", "<span>", 1)
-                    .replacen("`", "</span>", 1);
+                String::from(&self.replace("  ", "<br>"))
             },
             None => {
-                break;
+                return self
             }
         }
     }
-
-    // First loop replaces triple-asterisks (bold italic)
-    loop {
-        match line.find("***") {
-            Some(_) => {
-                line = line
-                    .replacen("***", "<strong><em>", 1)
-                    .replacen("***", "</em></strong>", 1);
-            },
-            None => {
-                break;
+    // TODO: Does this cause an unnecessary amount of heap allocations? Is the
+    // formatted_string actually being modified here, and if not, is there a
+    // less costly implementation?
+    fn emphasize_text(self) -> String {
+        let mut formatted_string: String = String::from(&self);
+        loop {
+            match &formatted_string.find("`") {
+                Some(_) => {
+                    formatted_string = String::from(formatted_string
+                            .replacen("`", "<span>", 1)
+                            .replacen("`", "</span>", 1));
+                },
+                None => {
+                    break;
+                }
             }
         }
-    }
 
-    // Second loop replaces double-asterisks (bold)
-    loop {
-        match line.find("**") {
-            Some(_) => {
-                line = line
-                    .replacen("**", "<strong>", 1)
-                    .replacen("**", "</strong>", 1);
-            },
-            None => {
-                break;
+        loop {
+            match &formatted_string.find("***") {
+                Some(_) => {
+                    formatted_string = String::from(formatted_string
+                        .replacen("***", "<strong><em>", 1)
+                        .replacen("***", "</em></strong>", 1));
+                },
+                None => {
+                    break;
+                }
             }
         }
-    }
 
-    // Lastly, the third loop replaces single-asterisks (italic)
-    loop {
-        match line.find("*") {
-            Some(_) => {
-                line = line
-                    .replacen("*", "<em>", 1)
-                    .replacen("*", "</em>", 1);
-            },
-            None => {
-                break;
+        loop {
+            match &formatted_string.find("**") {
+                Some(_) => {
+                    formatted_string = String::from(formatted_string
+                        .replacen("**", "<strong>", 1)
+                        .replacen("**", "</strong>", 1));
+                },
+                None => {
+                    break;
+                }
             }
         }
+
+        loop {
+            match &formatted_string.find("*") {
+                Some(_) => {
+                    formatted_string = String::from(formatted_string
+                        .replacen("*", "<em>", 1)
+                        .replacen("*", "</em>", 1));
+                },
+                None => {
+                    break;
+                }
+            }
+        }
+        formatted_string
     }
-    line
-}
 
-pub fn remove_empty_tags(line: &str) -> String {
-    let mut line = String::from(line);
-
-    line = line
+    fn remove_empty_elements(self) -> String {
+        String::from(&self
         .replace("<p></p>", "")
         .replace("<ul></ul>", "")
         .replace("<ol></ol>", "")
@@ -76,6 +84,6 @@ pub fn remove_empty_tags(line: &str) -> String {
         .replace("<em><strong></strong><em>", "")
         .replace("<em></em>", "")
         .replace("<strong></strong>", "")
-        .replace("<span></span>", "");
-    line
+        .replace("<span></span>", ""))
+    }
 }
