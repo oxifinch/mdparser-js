@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct ChapterData {
     pub html: String,
     tags: Vec<String>,
@@ -24,24 +25,21 @@ impl ChapterData {
         //     no more matches => break
         // }
 
-        //println!("[ DEBUG ] Running fetch_tag_from_line.");
         let mut current_line = String::from(line);
+        let mut l: usize;
+        let mut r: usize;
         loop {
             match &current_line.find("{{") {
                 Some(lb) => {
                     match &current_line.find("}}") {
                         Some(rb) => {
-                            println!("[ DEBUG ] Current line before: '{}'", current_line);
-                            let l: usize = lb.to_owned();
-                            let r: usize = rb.to_owned() + 2;
+                            l = lb.to_owned();
+                            r = rb.to_owned() + 2;
                             let full_tag = &line[l..r];
                             let tag = &full_tag[2..full_tag.len() - 2];
                             self.tags.push(String::from(tag));
                             current_line = String::from(
                                 &current_line.replace(&full_tag, ""));
-                            println!("[ DEBUG ] Current line after: '{}'", current_line);
-                            println!("");
-                            break;
                         },
                         None => {
                             break;
