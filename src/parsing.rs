@@ -13,7 +13,7 @@ pub fn parse_markdown(data: String) -> ChapterData {
     for buf_line in data.lines() {
         let mut line = String::from(buf_line.trim_start());
         chapter_data.fetch_tag_from_line(&line);
-        line = line.add_line_breaks();
+        line = line.add_line_breaks().convert_tags();
         let compiled_line: String;
 
         // Check the first non-whitespace word to determine what type of line this is.

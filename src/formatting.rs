@@ -2,6 +2,7 @@ pub trait MarkdownFormat {
     fn add_line_breaks(self) -> String;
     fn emphasize_text(self) -> String;
     fn remove_empty_elements(self) -> String;
+    fn convert_tags(self) -> String;
 }
 
 impl MarkdownFormat for String {
@@ -85,5 +86,29 @@ impl MarkdownFormat for String {
         .replace("<em></em>", "")
         .replace("<strong></strong>", "")
         .replace("<span></span>", ""))
+    }
+
+    fn convert_tags(self) -> String {
+        let mut formatted_string: String = String::from(&self);
+        loop {
+            match &formatted_string.find("{{") {
+                Some(_) => {
+                    match &formatted_string.find("}}") {
+                        Some(_) => {
+                            formatted_string = String::from(formatted_string
+                                .replacen("{{", "<span class=\"chapter_meta_tag\">", 1)
+                                .replacen("}}", "</span>", 1));
+                        },
+                        None => {
+                            break;
+                        }
+                    }
+                },
+                None => {
+                    break;
+                }
+            }
+        }
+        formatted_string
     }
 }
