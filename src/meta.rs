@@ -14,32 +14,27 @@ impl ChapterData {
         }
     }
     pub fn fetch_tag_from_line(&mut self, line: &str) {
-        let mut current_line = String::from(line);
-        let mut l: usize;
-        let mut r: usize;
-        loop {
-            match &current_line.find("{{") {
+        for word in line.split_whitespace() {
+            match &word.find("{{") {
                 Some(lb) => {
-                    l = lb.to_owned();
-                    match &current_line.find("}}") {
+                    match &word.find("}}") {
                         Some(rb) => {
-                            r = rb.to_owned() + 2;
-                            let full_tag = &line[l..r];
-                            let tag = &full_tag[2..full_tag.len() - 2];
+                            let l = lb.to_owned();
+                            let r = rb.to_owned();
+                            let tag = &word[l+2..r];
                             self.tags.push(String::from(tag));
-                            current_line = String::from(
-                                &current_line.replace(&full_tag, ""));
                         },
                         None => {
-                            break;
+                            continue;
                         }
                     }
                 },
                 None => {
-                    break;
+                    continue;
                 }
             }
         }
+
     }
 
     pub fn print_info(&self) {
