@@ -5,5 +5,5 @@ fn main() {
     println!("Hello, world!");
     let content = read_markdown_file("../../../testfiles/markdown_01.md");
     let chapter = parse_markdown(content);
-    chapter.print_info();
+    println!("{}", chapter);
 }

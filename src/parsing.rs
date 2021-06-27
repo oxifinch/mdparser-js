@@ -1,9 +1,19 @@
 use super::formatting::MarkdownFormat;
-use super::meta::ChapterData;
+use super::meta::ChapterContent;
 
-pub fn parse_markdown(data: String) -> ChapterData {
+pub fn parse_chapter_content(chapter: ChapterContent) -> String {
+    let serialized = match serde_json::to_string(&chapter) {
+        Ok(s) => s,
+        Err(_) => {
+            String::from("{}")
+        }
+    };
+    serialized
+}
+
+pub fn parse_markdown(data: String) -> String {
     let mut tokens: Vec<String> = Vec::new();
-    let mut chapter_data = ChapterData::new();
+    let mut chapter_content = ChapterContent::new();
 
     let mut p = false;
     let mut ul = false;
@@ -12,7 +22,7 @@ pub fn parse_markdown(data: String) -> ChapterData {
     let mut cb = false;
     for buf_line in data.lines() {
         let mut line = String::from(buf_line.trim_start());
-        chapter_data.fetch_tag_from_line(&line);
+        chapter_content.fetch_tag_from_line(&line);
         line = line.add_line_breaks().convert_tags();
         let compiled_line: String;
 
@@ -228,6 +238,7 @@ pub fn parse_markdown(data: String) -> ChapterData {
     for line in tokens {
         html_string.push_str(line.as_str());
     }
-    chapter_data.html = html_string;
-    chapter_data
+    chapter_content.html = html_string;
+    let json = parse_chapter_content(chapter_content);
+    json
 }

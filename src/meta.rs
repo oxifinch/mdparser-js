@@ -1,18 +1,21 @@
-#[derive(Debug)]
-pub struct ChapterData {
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChapterContent {
     pub html: String,
     tags: Vec<String>,
 }
 
-impl ChapterData {
-    pub fn new() -> ChapterData {
+impl ChapterContent {
+    pub fn new() -> ChapterContent {
         let html = String::from("");
         let tags: Vec<String> = Vec::new();
-        ChapterData {
+        ChapterContent {
             html,
             tags
         }
     }
+
     pub fn fetch_tag_from_line(&mut self, line: &str) {
         for word in line.split_whitespace() {
             match &word.find("{{") {
