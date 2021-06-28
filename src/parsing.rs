@@ -1,5 +1,6 @@
 use super::formatting::MarkdownFormat;
 use super::meta::ChapterContent;
+use wasm_bindgen::prelude::*;
 
 pub fn parse_chapter_content(chapter: ChapterContent) -> String {
     let serialized = match serde_json::to_string(&chapter) {
@@ -11,6 +12,7 @@ pub fn parse_chapter_content(chapter: ChapterContent) -> String {
     serialized
 }
 
+#[wasm_bindgen]
 pub fn parse_markdown(data: String) -> String {
     let mut tokens: Vec<String> = Vec::new();
     let mut chapter_content = ChapterContent::new();
